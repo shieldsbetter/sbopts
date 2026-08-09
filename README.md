@@ -3,26 +3,19 @@
 [![CI](https://github.com/shieldsbetter/sbopts/actions/workflows/ci.yml/badge.svg)](https://github.com/shieldsbetter/sbopts/actions/workflows/ci.yml)
 [![Coverage](https://raw.githubusercontent.com/shieldsbetter/sbopts/badges/coverage.svg)](https://github.com/shieldsbetter/sbopts/actions/workflows/ci.yml)
 
-An **opinionated** command-line parser for Node ESM. It doesn't try to support
-every CLI convention ever invented — it picks one good answer for each question
-and enforces it, so your CLI is consistent and your parsing code is tiny.
+Command line option parsing to my particular tastes.
 
-The opinions:
+The tastes:
 
-- **Long flags are `--foo`, short flags are `-f`.** Always. No `-foo`, no
-  `/foo`.
-- **Booleans stack: `-abc` means `-a -b -c`.** A multi-character short token is
-  only boolean flags; a value-taking short must stand on its own (`-o bar`).
-- **Repeated flags become arrays.** `--tag a --tag b` → `['a', 'b']`.
-- **Subcommands are the norm**, and **a parent's flags are inherited by its
-  children** — so they can be _deferred_ past the subcommand name: `app -C dir
-build` and `app build -C dir` mean the same thing.
-- **`--` ends parsing.** Everything after it is handed to your command verbatim.
-- **`--help` is generated for you**, with a short summary and long description of
-  the command and every flag in scope, typeset with
-  [termiflo](https://www.npmjs.com/package/@shieldsbetter/termiflo).
+- Long flags are `--foo`, short flags are `-f`.
+- Boolean short flags stack: `-abc` means `-a -b -c`.
+- Lists by repeated entries: `-f bar -f bazz` --> `['bar', 'bazz']`.
+- Subcommands are the norm and parent flags are inherited by its children.
+  `app -C dir build` and `app build -C dir` mean the same thing.
+- `--` ends parsing.
+- `--help` is generated for you.
 
-Pure ESM, Node ≥ 18. The only runtime dependency is termiflo (for help layout).
+Pure ESM, Node ≥ 18.
 
 ## Install
 
@@ -267,4 +260,13 @@ Global options:
 
 ## License
 
-MIT © 2026 Hampton Smith
+MIT, in full at `LICENSE`. The one runtime dependency, `@shieldsbetter/termiflo`,
+is ISC, and it bundles the en-US hyphenation patterns from the hyph-utf8
+project: those are Gerard D.C. Kuiken's, under their own permissive notice,
+which requires only that the copyright and the notice itself be preserved.
+
+So a bundle containing sbopts contains that notice too. Minifiers strip
+comments, which would drop it. Configure yours to preserve the header comment in
+termiflo's `src/data/hyphenation-en-us.js` (most support a `/*!`-style or
+per-file exclusion), or reproduce the notice in your own third-party
+attributions.
