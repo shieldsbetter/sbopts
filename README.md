@@ -126,7 +126,7 @@ flags: {
 | `type`      | `'boolean'` (default), `'string'`, or `'number'`        |
 | `array`     | always collect into an array (even a single occurrence) |
 | `default`   | value when the flag is absent                           |
-| `required`  | error if never supplied                                 |
+| `required`  | error if never supplied (never with `default`)          |
 | `choices`   | restrict the (coerced) value to a set                   |
 | `negatable` | for booleans, allow `--no-<long>` (default `true`)      |
 | `summary`   | one-line help text                                      |
@@ -134,6 +134,10 @@ flags: {
 Booleans are presence-only (`-v` ⇒ `true`); the rest take a value. Defaults
 when absent: `false` for booleans, `[]` for arrays, `undefined` otherwise (or
 your `default`).
+
+`required` and `default` together are a `DefinitionError`. A flag that must
+always be supplied can never fall back to a default, so one of the two would
+silently do nothing; sbopts makes you say which you meant.
 
 ## The grammar, precisely
 
@@ -236,6 +240,11 @@ their own `--help`. The
 layout — usage line, description, `Arguments`, `Commands`, `Options`, and
 `Global options` (inherited flags) — is typeset with termiflo, so it wraps to the
 terminal width and stays aligned.
+
+An option's description ends with `Required.` or `Default: <value>` where either
+applies, since neither is visible in the invocation itself. Defaults are shown
+JSON-quoted, so an empty string reads as `""` rather than vanishing. An implicit
+default (`false`, `[]`) is not announced — only one you declared.
 
 ```text
 Usage: app build [options] [target]

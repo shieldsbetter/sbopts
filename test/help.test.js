@@ -107,3 +107,42 @@ test('a row with no description renders as an empty second column', () => {
     const text = c.help({ width: 60 });
     assert.match(text, /-q, --quiet/);
 });
+
+test('the options table says what happens when a flag is absent', () => {
+    // Neither fact is visible in the invocation: `-o, --out <string>` reads the
+    // same whether the flag is mandatory, optional, or defaulted.
+    const text = command('app', {
+        flags: {
+            out: {
+                short: 'o',
+                type: 'string',
+                required: true,
+                summary: 'Where.',
+            },
+            jobs: { short: 'j', type: 'number', default: 4, summary: 'Jobs.' },
+            name: { type: 'string', default: '', summary: 'Label.' },
+            tags: { type: 'string', array: true, default: ['a', 'b'] },
+            plain: { short: 'p', type: 'boolean', summary: 'No decoration.' },
+        },
+        run: () => {},
+    }).help({ width: 72 });
+
+    assert.match(text, /--out <string>\s+Where\. Required\./);
+    assert.match(text, /--jobs <number>\s+Jobs\. Default: 4/);
+    // JSON quoting, so an empty string is visible rather than vanishing.
+    assert.match(text, /--name <string>\s+Label\. Default: ""/);
+    // A note stands alone when there is no summary to precede it.
+    assert.match(text, /--tags <string>\s+Default: \["a","b"\]/);
+    // An implicit default is not a declared one, so it is not announced.
+    assert.match(text, /--plain\s+No decoration\.\n/);
+    assert.doesNotMatch(text, /No decoration\. Default/);
+
+    // `default: undefined` is a declared default, and a meaningful one: on a
+    // boolean it overrides the implicit false. JSON.stringify has no rendering
+    // for it, so the note falls back to String().
+    const undef = command('app', {
+        flags: { maybe: { type: 'boolean', default: undefined } },
+        run: () => {},
+    }).help({ width: 72 });
+    assert.match(undef, /--maybe\s+Default: undefined/);
+});

@@ -56,6 +56,17 @@ export class Flag {
                 `Flag '--${long}' is not boolean, so it cannot be negatable.`,
             );
         }
+        if (spec.required === true && 'default' in spec) {
+            // Contradictory by construction: a flag that must always be
+            // supplied can never fall back. The parser resolves it by checking
+            // `required` first, which left the default unreachable and one of
+            // the two options quietly doing nothing.
+            throw new DefinitionError(
+                `Flag '--${long}' is required and also has a default. ` +
+                    `A required flag can never fall back to one; drop ` +
+                    `whichever you did not mean.`,
+            );
+        }
 
         this.long = long;
         this.short = spec.short;

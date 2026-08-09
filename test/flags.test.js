@@ -80,3 +80,29 @@ test('a flag name that is not a long name is a definition error', () => {
         );
     }
 });
+
+test('required and default together are a definition error', () => {
+    // Contradictory by construction: the parser checks `required` first, so the
+    // default was unreachable and one of the two options quietly did nothing.
+    assert.throws(
+        () => new Flag('out', { type: 'string', required: true, default: 'x' }),
+        {
+            name: 'DefinitionError',
+            message: /required and also has a default/,
+        },
+    );
+    // `default: undefined` still counts as declaring one -- `'default' in spec`
+    // is the test, so writing the key at all is a statement of intent.
+    assert.throws(
+        () =>
+            new Flag('out', {
+                type: 'string',
+                required: true,
+                default: undefined,
+            }),
+        { name: 'DefinitionError' },
+    );
+    // Either alone is fine.
+    assert.ok(new Flag('out', { type: 'string', required: true }));
+    assert.ok(new Flag('out', { type: 'string', default: 'x' }));
+});

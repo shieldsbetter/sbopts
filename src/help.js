@@ -81,6 +81,30 @@ function twoColumn(rows) {
     });
 }
 
+/**
+ * The description cell for a flag: its summary, plus what the parser will do
+ * when the flag is absent. Neither fact is visible in the invocation, so
+ * `-o, --out <string>` used to read the same whether it was mandatory,
+ * optional, or defaulted.
+ *
+ * At most one note ever appears: a flag that is both required and defaulted is
+ * rejected when the CLI is built.
+ */
+function flagSummary(flag) {
+    const notes = [];
+    if (flag.required) notes.push('Required.');
+    if (flag.hasDefault) notes.push(`Default: ${formatDefault(flag.default)}`);
+    return [flag.summary, ...notes].filter(Boolean).join(' ');
+}
+
+/**
+ * Render a default for the help table. JSON quoting throughout, so an empty
+ * string or one with spaces is visible rather than vanishing into the line.
+ */
+function formatDefault(value) {
+    return JSON.stringify(value) ?? String(value);
+}
+
 /** A labelled section: a heading immediately followed by its rows. */
 function section(label, rows) {
     return stack([text(label, { marginTop: 1 }), twoColumn(rows)]);
@@ -123,9 +147,10 @@ export function renderHelp(command, options = {}) {
     // Options: this command's own flags, plus the implicit --help.
     const optionRows = command
         .ownVisibleFlags()
-        .map((f) => [f.invocation(), f.summary]);
+        .map((f) => [f.invocation(), flagSummary(f)]);
     const helpFlag = command.helpFlag();
-    if (helpFlag) optionRows.push([helpFlag.invocation(), helpFlag.summary]);
+    if (helpFlag)
+        optionRows.push([helpFlag.invocation(), flagSummary(helpFlag)]);
     if (optionRows.length > 0) blocks.push(section('Options:', optionRows));
 
     // Global options: everything inherited from ancestors.
@@ -134,7 +159,7 @@ export function renderHelp(command, options = {}) {
         blocks.push(
             section(
                 'Global options:',
-                inherited.map((f) => [f.invocation(), f.summary]),
+                inherited.map((f) => [f.invocation(), flagSummary(f)]),
             ),
         );
     }

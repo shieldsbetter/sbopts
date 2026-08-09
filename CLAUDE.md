@@ -135,6 +135,21 @@ either spelling anywhere in the chain; `helpFlag()` returns null when they have.
 A declared help flag is ordinary: it takes a value, does not short-circuit, and
 `parse()` reports `help: false`.
 
+**`required` and `default` are mutually exclusive**, rejected in `Flag`'s
+constructor. `finalize()` checks `required` first and returns from that branch,
+so a default alongside it was unreachable and one of the two options quietly did
+nothing. The test is `'default' in spec`, not `spec.default !== undefined`:
+writing the key at all is a statement of intent, and `default: undefined` is
+meaningful on a boolean, where it overrides the implicit `false`.
+
+**The options table announces both.** `flagSummary()` in `help.js` appends
+`Required.` or `Default: <value>`, because neither is visible in the invocation
+— `-o, --out <string>` reads identically whether the flag is mandatory,
+optional, or defaulted. Defaults are JSON-quoted so an empty string shows as
+`""` instead of vanishing into the line, and only a _declared_ default is
+announced, never the implicit `false`/`[]`. At most one note can appear, since
+the combination is rejected above.
+
 **`args` are documentation.** `ArgSpec` shapes the usage line (`<required>`,
 `[optional]`, `<variadic...>`) and the Arguments section. Positionals are handed
 to the handler as a plain `string[]`; nothing binds them to those names.
