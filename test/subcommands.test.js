@@ -138,3 +138,77 @@ test('helpFlag() is null when the developer declared their own', () => {
     assert.equal(mine.helpFlag(), null);
     assert.ok(command('d', { run: () => {} }).helpFlag());
 });
+
+test('a developer may take the help spelling at any depth', () => {
+    // The implicit --help is synthesized, not declared, so claiming its name is
+    // an override rather than a collision. It used to be a DefinitionError
+    // anywhere but the root, because the check compared against the parent's
+    // effective flags, which already contained the implicit one.
+    const cli = command('p', {
+        commands: {
+            k: {
+                flags: {
+                    help: { short: 'h', type: 'string', summary: 'mine' },
+                },
+                commands: { deep: { run: () => {} } },
+                run: () => {},
+            },
+            m: { run: () => {} },
+        },
+        run: () => {},
+    });
+
+    // The subcommand's own --help is an ordinary value flag: no short-circuit.
+    const r = cli.parse(['k', '--help', 'x']);
+    assert.equal(r.help, false);
+    assert.equal(r.flags.help, 'x');
+    assert.equal(cli.subcommands.get('k').helpFlag(), null);
+
+    // It reaches descendants, and leaves siblings and ancestors alone.
+    assert.equal(cli.parse(['k', 'deep', '--help', 'v']).help, false);
+    assert.equal(cli.parse(['m', '--help']).help, true);
+    assert.equal(cli.parse(['--help']).help, true);
+
+    // Taking only the short letter for something else works the same way.
+    const short = command('q', {
+        commands: {
+            k: {
+                flags: { host: { short: 'h', type: 'string' } },
+                run: () => {},
+            },
+        },
+        run: () => {},
+    });
+    assert.equal(
+        short.parse(['k', '-h', 'example.com']).flags.host,
+        'example.com',
+    );
+});
+
+test('redeclaring a flag the developer actually declared is still an error', () => {
+    // Only the implicit help is overridable. A real inherited flag -- including
+    // an inherited `help` someone declared -- collides as it always did.
+    assert.throws(
+        () =>
+            command('p', {
+                flags: { help: { type: 'string' } },
+                commands: {
+                    k: { flags: { help: { type: 'string' } }, run: () => {} },
+                },
+            }),
+        {
+            name: 'DefinitionError',
+            message: /redefines inherited flag '--help'/,
+        },
+    );
+    assert.throws(
+        () =>
+            command('p', {
+                flags: { verbose: { short: 'v' } },
+                commands: {
+                    k: { flags: { verify: { short: 'v' } }, run: () => {} },
+                },
+            }),
+        { name: 'DefinitionError', message: /reuses short '-v'/ },
+    );
+});

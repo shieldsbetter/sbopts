@@ -87,6 +87,15 @@ export class Command {
         const longs = new Map();
         const shorts = new Map();
         for (const f of this.parent.effectiveFlags()) {
+            // The implicit help is synthesized, not declared, so taking its
+            // spelling is an override rather than a collision -- and it has to
+            // be available at every level, not just the root. effectiveFlags()
+            // then sees the caller's `help`/`-h` in the chain and stops adding
+            // the implicit one for this command and its descendants.
+            //
+            // A help flag the DEVELOPER declared is an ordinary flag with no
+            // isHelp, so redeclaring that one still collides, as it should.
+            if (f.isHelp) continue;
             longs.set(f.long, f);
             if (!isNil(f.short)) shorts.set(f.short, f);
         }
@@ -107,9 +116,16 @@ export class Command {
     }
 
     /**
-     * This command's flags plus all inherited ones, child shadowing parent by
-     * long name, with the implicit `--help` appended (unless the developer
-     * declared their own `help`/`h`).
+     * This command's flags plus every inherited one, with the implicit
+     * `--help` appended unless the developer has taken `help` or `-h`
+     * somewhere in the chain.
+     *
+     * The Map keyed by long name deduplicates rather than shadows: a child
+     * redeclaring an inherited flag is rejected outright by
+     * `_checkInheritedFlagCollisions()`, so there is never a second entry to
+     * overwrite the first.
+     *
+     * Memoized. Flags pushed onto `ownFlags` after the first call are not seen.
      * @returns {Flag[]}
      */
     effectiveFlags() {

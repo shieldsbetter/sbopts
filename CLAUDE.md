@@ -90,16 +90,17 @@ long name, or reusing an inherited short letter, is a `DefinitionError` from
 `_checkInheritedFlagCollisions()` in the constructor. The alternative is a CLI
 that silently resolves `-v` to whichever ancestor happened to be closest.
 
-Two consequences of that check being unconditional:
+One consequence worth knowing: the `byLong.set()` overwrite in
+`effectiveFlags()` can never actually overwrite anything. It deduplicates a case
+the constructor has already rejected.
 
-- The `byLong.set()` overwrite in `effectiveFlags()` can never actually
-  overwrite anything, and the JSDoc above it describing "child shadowing parent
-  by long name" is wrong. It is deduplication of a case the constructor already
-  rejected.
-- A **subcommand** cannot declare its own `help`, because the parent's
-  `effectiveFlags()` already contains the implicit one. Only a root command can
-  take that name over. That asymmetry is undocumented in the README and may be
-  worth deciding on rather than leaving as a side effect.
+**The implicit help is the one exception.** It is synthesized rather than
+declared, so `_checkInheritedFlagCollisions()` skips inherited flags with
+`isHelp` and a developer may take `help` or `-h` at any depth, not only at the
+root. `effectiveFlags()` then finds that spelling in the chain and stops adding
+the implicit flag for that command and its descendants, while siblings and
+ancestors keep theirs. A help flag someone actually declared is an ordinary flag
+with no `isHelp`, so redeclaring **that** in a child still collides.
 
 **There is no attached-value shorthand for short flags.** `-o bar` and `-o=bar`,
 never `-obar`. That single restriction is what makes a multi-character token
@@ -130,7 +131,9 @@ text should not first be told they are missing a required option. It also means
 `-h=anything` ignores its attached value rather than trying to coerce it.
 
 The implicit `--help`/`-h` is appended only if the developer has not taken
-either spelling; `helpFlag()` returns null when they have.
+either spelling anywhere in the chain; `helpFlag()` returns null when they have.
+A declared help flag is ordinary: it takes a value, does not short-circuit, and
+`parse()` reports `help: false`.
 
 **`args` are documentation.** `ArgSpec` shapes the usage line (`<required>`,
 `[optional]`, `<variadic...>`) and the Arguments section. Positionals are handed

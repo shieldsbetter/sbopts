@@ -172,7 +172,9 @@ cli.parse(['commit', '-C', 'dir']); // flags.dir === 'dir'  (deferred)
 ```
 
 Redefining an inherited long name or reusing an inherited short letter is a
-`DefinitionError` (a bug in your CLI, thrown when the tree is built).
+`DefinitionError` (a bug in your CLI, thrown when the tree is built). The
+implicit `--help` is the exception: it is added by sbopts rather than declared
+by you, so taking that spelling is an override, not a collision.
 
 ## Parsing vs. running
 
@@ -224,7 +226,13 @@ await cli.run(argv, {
 ## Help
 
 `--help` / `-h` short-circuits parsing and reports help for whichever command was
-in scope. `command.help({ width })` returns the same text as a string. The
+in scope. `command.help({ width })` returns the same text as a string.
+
+Declaring a flag named `help`, or one using `-h`, takes the spelling over — at
+any level, not just the root. Your flag is then an ordinary flag: it takes a
+value if you say so, it does not short-circuit, and `parse()` reports
+`help: false`. Descendants inherit the override; siblings and ancestors keep
+their own `--help`. The
 layout — usage line, description, `Arguments`, `Commands`, `Options`, and
 `Global options` (inherited flags) — is typeset with termiflo, so it wraps to the
 terminal width and stays aligned.
