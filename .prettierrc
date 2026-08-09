@@ -1,0 +1,15 @@
+{
+    "experimentalTernaries": true,
+    "jsxSingleQuote": true,
+    "singleQuote": true,
+    "tabWidth": 4,
+
+    "overrides": [
+        {
+            "files": "package-lock.json",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
+}
