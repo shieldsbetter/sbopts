@@ -48,7 +48,7 @@
         "subcommands",
         "command-line"
     ],
-    "license": "MIT",
+    "license": "ISC",
     "sideEffects": false,
     "dependencies": {
         "@shieldsbetter/termiflo": "^0.1.0"

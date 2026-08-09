@@ -260,13 +260,4 @@ Global options:
 
 ## License
 
-MIT, in full at `LICENSE`. The one runtime dependency, `@shieldsbetter/termiflo`,
-is ISC, and it bundles the en-US hyphenation patterns from the hyph-utf8
-project: those are Gerard D.C. Kuiken's, under their own permissive notice,
-which requires only that the copyright and the notice itself be preserved.
-
-So a bundle containing sbopts contains that notice too. Minifiers strip
-comments, which would drop it. Configure yours to preserve the header comment in
-termiflo's `src/data/hyphenation-en-us.js` (most support a `/*!`-style or
-per-file exclusion), or reproduce the notice in your own third-party
-attributions.
+ISC, in full at `LICENSE`.
